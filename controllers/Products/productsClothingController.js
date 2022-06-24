@@ -1,173 +1,51 @@
 const { ProductsClothing } = require("../../models/Products/ProductsClothing");
 const slugify = require("slugify");
+const filterModes = {
+  regexOnly: val => ({ $regex: val, $options: "i" }),
+  range: val => ({
+    $gte: val.split("-")[0],
+    $lte: val.split("-")[1],
+  }),
+  regexAndRange: val => ({$regex: val,
+  $options: "i",
+  $gte: val.$gte,
+  $lte: val.lte,})
+
+}
+
+const filterConfig = {
+  "color": filterModes.regexOnly,
+  "material": filterModes.regexOnly,
+  "size": filterModes.regexOnly,
+  "brand": filterModes.regexOnly,
+  "price": filterModes.range,
+  "dimensions": filterModes.regexOnly,
+  "height": filterModes.regexAndRange,
+  "design": filterModes.regexOnly,
+  "pattern": filterModes.regexOnly,
+  "armLenght": filterModes.regexOnly,
+  "armType": filterModes.regexOnly,
+  "areaOfUsage": filterModes.regexOnly,
+  "fabricType": filterModes.regexOnly,
+  "model": filterModes.regexOnly,
+  "style": filterModes.regexOnly,
+  "collarType": filterModes.regexOnly,
+  "trousersType": filterModes.regexOnly,
+  "waistType": filterModes.regexOnly,
+  "Silhouette": filterModes.regexOnly,
+  "thickness": filterModes.regexOnly,
+};
 
 exports.GetAllProductClothing = async (req, res) => {
-  const categorySlugify = req.query.categorySlugify;
-  const color = req.query.color;
-  const material = req.query.material;
-  const size = req.query.size;
-  const brand = req.query.brand;
-  const price = req.query.price;
-  const dimensions = req.query.dimensions;
-  const height = req.query.height;
-  const design = req.query.design;
-  const pattern = req.query.pattern;
-  const armLenght = req.query.armLenght;
-  const armType = req.query.armType;
-  const areaOfUsage = req.query.areaOfUsage;
-  const fabricType = req.query.fabricType;
-  const model = req.query.model;
-  const style = req.query.style;
-  const collarType = req.query.collarType;
-  const trousersType = req.query.trousersType;
-  const waistType = req.query.waistType;
-  const Silhouette = req.query.Silhouette;
-  const thickness = req.query.thickness;
-
-  let filter = {};
-  if (color) {
-    filter = {
-      ...filter,
-      color: { $regex: color, $options: "i" },
-    };
-  } else if (categorySlugify) {
-    filter = {
-      ...filter,
-      categorySlugify: { $regex: categorySlugify, $options: "i" },
-    };
-  }
-  if (material) {
-    filter = {
-      ...filter,
-      material: { $regex: material, $options: "i" },
-    };
-  }
-  if (size) {
-    filter = {
-      ...filter,
-      size: { $regex: size, $options: "i" },
-    };
-  }
-  if (brand) {
-    filter = {
-      ...filter,
-      brand: { $regex: brand, $options: "i" },
-    };
-  }
-  if (price) {
-    filter = {
-      ...filter,
-      price: {
-        $gte: price.split("-")[0],
-        $lte: price.split("-")[1],
-      },
-    };
-  }
-  if (dimensions) {
-    filter = {
-      ...filter,
-      dimensions: { $regex: dimensions, $options: "i" },
-    };
-  }
-  if (height) {
-    filter = {
-      ...filter,
-      height: {
-        $regex: height,
-        $options: "i",
-        $gte: req.query.$gte,
-        $lte: height.lte,
-      },
-    };
-  }
-  if (design) {
-    filter = {
-      ...filter,
-      design: { $regex: design, $options: "i" },
-    };
-  }
-  if (pattern) {
-    filter = {
-      ...filter,
-      pattern: { $regex: pattern, $options: "i" },
-    };
-  }
-  if (armLenght) {
-    filter = {
-      ...filter,
-
-      armLenght: {
-        $regex: armLenght,
-        $options: "i",
-        $gte: armLenght.$gte,
-        $lte: armLenght.lte,
-      },
-    };
-  }
-  if (armType) {
-    filter = {
-      ...filter,
-      armType: { $regex: armType, $options: "i" },
-    };
-  }
-  if (areaOfUsage) {
-    filter = {
-      ...filter,
-      areaOfUsage: { $regex: areaOfUsage, $options: "i" },
-    };
-  }
-  if (fabricType) {
-    filter = {
-      ...filter,
-
-      fabricType: { $regex: fabricType, $options: "i" },
-    };
-  }
-  if (model) {
-    filter = {
-      ...filter,
-      model: { $regex: model, $options: "i" },
-    };
-  }
-  if (style) {
-    filter = {
-      ...filter,
-      style: { $regex: style, $options: "i" },
-    };
-  }
-  if (collarType) {
-    filter = {
-      ...filter,
-      collarType: { $regex: collarType, $options: "i" },
-    };
-  }
-  if (trousersType) {
-    filter = {
-      ...filter,
-
-      trousersType: { $regex: trousersType, $options: "i" },
-    };
-  }
-  if (waistType) {
-    filter = {
-      ...filter,
-      waistType: { $regex: waistType, $options: "i" },
-    };
-  }
-  if (Silhouette) {
-    filter = {
-      ...filter,
-      Silhouette: { $regex: Silhouette, $options: "i" },
-    };
-  }
-  if (thickness) {
-    filter = {
-      ...filter,
-
-      thickness: { $regex: thickness, $options: "i" },
-    };
-  }
-
+  
+  const filter = Object.keys(filterConfig)
+    .map(key => {
+      const valueFromQuery = req.query[key];
+      const callbackFilterObject = filterConfig[key];
+      const filterObject = callbackFilterObject(valueFromQuery);
+      return { [key]: filterObject };
+    }).reduce((acc, curr) => ({ ...acc, ...curr}), {});
+  
   const productClothing = await ProductsClothing.find(filter);
 
   try {
